@@ -46,5 +46,48 @@
     </footer>
 
     <script src="app.js"></script>
+    <script>
+      // Função para criar o HTML de cada card de atividade, incluindo participantes
+      function createActivityCard(name, activity) {
+        const card = document.createElement('div');
+        card.className = 'activity-card';
+
+        card.innerHTML = `
+          <h4>${name}</h4>
+          <p><strong>Description:</strong> ${activity.description}</p>
+          <p><strong>Schedule:</strong> ${activity.schedule}</p>
+          <p><strong>Max Participants:</strong> ${activity.max_participants}</p>
+          <div class="participants-section">
+            <strong>Participants:</strong>
+            ${
+              activity.participants && activity.participants.length > 0
+                ? `<ul class="participants-list">
+                    ${activity.participants.map(email => `<li>${email}</li>`).join('')}
+                  </ul>`
+                : `<span class="no-participants">No participants yet.</span>`
+            }
+          </div>
+        `;
+        return card;
+      }
+
+      // Função para carregar as atividades e exibir os cards
+      async function loadActivities() {
+        const activitiesList = document.getElementById('activities-list');
+        activitiesList.innerHTML = '';
+        try {
+          const res = await fetch('/activities');
+          const activities = await res.json();
+          Object.entries(activities).forEach(([name, activity]) => {
+            const card = createActivityCard(name, activity);
+            activitiesList.appendChild(card);
+          });
+        } catch (e) {
+          activitiesList.innerHTML = '<p class="error">Failed to load activities.</p>';
+        }
+      }
+
+      loadActivities();
+    </script>
   </body>
 </html>
