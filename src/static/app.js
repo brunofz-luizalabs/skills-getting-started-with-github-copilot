@@ -4,32 +4,51 @@ document.addEventListener("DOMContentLoaded", () => {
   const signupForm = document.getElementById("signup-form");
   const messageDiv = document.getElementById("message");
 
-  // Function to fetch activities from API
+  // Cria o card de atividade, incluindo participantes
+  function createActivityCard(name, details) {
+    const card = document.createElement("div");
+    card.className = "activity-card";
+
+    // Garante que participants seja sempre um array
+    const participants = Array.isArray(details.participants) ? details.participants : [];
+
+    const spotsLeft = details.max_participants - participants.length;
+
+    card.innerHTML = `
+      <h4>${name}</h4>
+      <p><strong>Description:</strong> ${details.description}</p>
+      <p><strong>Schedule:</strong> ${details.schedule}</p>
+      <p><strong>Availability:</strong> ${spotsLeft} spots left</p>
+      <div class="participants-section">
+        <strong>Participants:</strong>
+        ${
+          participants.length > 0
+            ? `<ul class="participants-list">
+                ${participants.map(email => `<li>${email}</li>`).join('')}
+              </ul>`
+            : `<span class="no-participants">No participants yet.</span>`
+        }
+      </div>
+    `;
+    return card;
+  }
+
+  // Busca e exibe as atividades, preenchendo cards e select
   async function fetchActivities() {
     try {
       const response = await fetch("/activities");
       const activities = await response.json();
 
-      // Clear loading message
+      // Limpa mensagens e listas
       activitiesList.innerHTML = "";
+      activitySelect.innerHTML = '<option value="">-- Select an activity --</option>';
 
-      // Populate activities list
       Object.entries(activities).forEach(([name, details]) => {
-        const activityCard = document.createElement("div");
-        activityCard.className = "activity-card";
-
-        const spotsLeft = details.max_participants - details.participants.length;
-
-        activityCard.innerHTML = `
-          <h4>${name}</h4>
-          <p>${details.description}</p>
-          <p><strong>Schedule:</strong> ${details.schedule}</p>
-          <p><strong>Availability:</strong> ${spotsLeft} spots left</p>
-        `;
-
+        // Card com participantes
+        const activityCard = createActivityCard(name, details);
         activitiesList.appendChild(activityCard);
 
-        // Add option to select dropdown
+        // Opção no select
         const option = document.createElement("option");
         option.value = name;
         option.textContent = name;
@@ -41,7 +60,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // Handle form submission
+  // Inscrição no formulário
   signupForm.addEventListener("submit", async (event) => {
     event.preventDefault();
 
@@ -62,6 +81,7 @@ document.addEventListener("DOMContentLoaded", () => {
         messageDiv.textContent = result.message;
         messageDiv.className = "success";
         signupForm.reset();
+        await fetchActivities(); // Atualiza cards e participantes
       } else {
         messageDiv.textContent = result.detail || "An error occurred";
         messageDiv.className = "error";
@@ -69,7 +89,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
       messageDiv.classList.remove("hidden");
 
-      // Hide message after 5 seconds
       setTimeout(() => {
         messageDiv.classList.add("hidden");
       }, 5000);
@@ -81,6 +100,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Initialize app
+  // Inicializa
   fetchActivities();
 });
